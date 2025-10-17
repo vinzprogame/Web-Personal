@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RDVSP V4 — Demo (Safe Visual)</title>
+
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a2d9d5b5c9.js" crossorigin="anonymous"></script>
+
+  <style>
+    /* ===== Base & Theme ===== */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:'Orbitron',sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(142,75,255,0.06), transparent 10%),
+        radial-gradient(900px 400px at 90% 90%, rgba(110,71,255,0.03), transparent 10%),
+        #040006;
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-y:auto;
+    }
+    .wrap{max-width:520px;margin:18px auto 120px;padding:18px}
+    .neon{color:#e9d8ff;text-shadow:0 0 8px #e9d8ff, 0 0 20px #8e4bff}
+
+    /* ===== Cards & Inputs ===== */
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+      border:1px solid rgba(168,85,247,0.12);
+      border-radius:14px;
+      padding:14px;
+      margin:14px 0;
+      box-shadow: 0 10px 40px rgba(14,2,30,0.6);
+    }
+    .center{text-align:center}
+    .avatar{
+      width:128px;height:128px;border-radius:12px;margin:8px auto 12px;display:block;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+      border:6px solid rgba(255,255,255,0.02); box-shadow:0 0 28px rgba(142,75,255,0.08);
+    }
+
+    .input{
+      width:100%;
+      padding:12px 14px;
+      border-radius:999px;
+      border:none;
+      background:rgba(255,255,255,0.025);
+      color:#fff;
+      margin:10px 0;
+      outline:none;
+      font-size:14px;
+      border:1px solid rgba(255,255,255,0.02);
+    }
+
+    .btn{
+      width:100%;
+      padding:12px 14px;
+      border-radius:999px;
+      border:none;
+      background:linear-gradient(180deg,#a855f7,#7c3aed);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 10px 30px rgba(124,58,237,0.12);
+    }
+    .btn:active{ transform:translateY(1px) }
+
+    .hint{font-size:13px;color:#d6c7ff;opacity:0.9;text-align:center;margin-top:8px}
+
+    /* ===== navbar (hidden until login) ===== */
+    .navbar{
+      position:fixed; left:50%; transform:translateX(-50%);
+      bottom:14px; width:520px; max-width:96%; display:flex; justify-content:space-around;
+      padding:10px 12px; border-radius:14px; background: rgba(0,0,0,0.58);
+      border:1px solid rgba(168,85,247,0.16); box-shadow:0 18px 40px rgba(0,0,0,0.6);
+      backdrop-filter:blur(6px);
+      opacity:0; pointer-events:none; transition:opacity .28s ease, transform .28s ease;
+    }
+    .navbar.visible{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+    .nav-item{ color:#d0a9ff; text-align:center; font-size:13px; cursor:pointer; width:23% }
+    .nav-item i{ font-size:18px; display:block; margin-bottom:4px }
+    .nav-item:hover{ transform:translateY(-6px); color:#fff; transition:.18s; }
+
+    /* ===== pages SPA ===== */
+    .page{ display:none; padding-bottom:40px; animation:fadeIn .36s ease }
+    .page.active{ display:block }
+    @keyframes fadeIn{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+
+    /* ===== Home ===== */
+    .stat{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; border-radius:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(168,85,247,0.06) }
+
+    /* ===== Power (visual) ===== */
+    .power-header{ display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:12px }
+    .icon-wrap{ width:72px;height:72px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(168,85,247,0.12);
+      box-shadow:0 12px 40px rgba(142,75,255,0.04) }
+    svg.icon-svg{ width:46px;height:46px; filter:drop-shadow(0 0 12px rgba(142,75,255,0.45)) }
+
+    .power-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; justify-items:center }
+    .power-card{ width:160px;height:140px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .22s, box-shadow .22s;border:1px solid rgba(255,255,255,0.02); overflow:visible }
+    .power-card .label{ font-weight:700; margin-top:8px; color:#fff }
+    .power-card small{ position:absolute; left:12px; bottom:10px; font-size:11px; color:rgba(255,255,255,0.85) }
+
+    .pc-red{ background: linear-gradient(180deg, rgba(255,48,98,0.06), rgba(60,8,36,0.03)); border:1px solid rgba(255,48,98,0.14); box-shadow:0 0 34px rgba(255,48,98,0.06); animation:breath1 3s ease-in-out infinite }
+    .pc-blue{ background: linear-gradient(180deg, rgba(30,120,255,0.04), rgba(6,12,40,0.03)); border:1px solid rgba(77,166,255,0.14); box-shadow:0 0 30px rgba(77,166,255,0.06); animation:breath2 3.4s ease-in-out infinite }
+    .pc-green{ background: linear-gradient(180deg, rgba(72,255,164,0.04), rgba(6,20,20,0.02)); border:1px solid rgba(72,255,164,0.12); box-shadow:0 0 30px rgba(72,255,164,0.05); animation:breath3 3.6s ease-in-out infinite }
+    .pc-amber{ background: linear-gradient(180deg, rgba(255,173,72,0.04), rgba(26,18,6,0.02)); border:1px solid rgba(255,173,72,0.14); box-shadow:0 0 30px rgba(255,173,72,0.05); animation:breath4 3.2s ease-in-out infinite }
+
+    @keyframes breath1{0%,100%{box-shadow:0 0 18px rgba(255,48,98,0.04)}50%{box-shadow:0 0 44px rgba(255,48,98,0.12)}}
+    @keyframes breath2{0%,100%{box-shadow:0 0 16px rgba(77,166,255,0.04)}50%{box-shadow:0 0 44px rgba(77,166,255,0.10)}}
+    @keyframes breath3{0%,100%{box-shadow:0 0 14px rgba(72,255,164,0.03)}50%{box-shadow:0 0 40px rgba(72,255,164,0.09)}}
+    @keyframes breath4{0%,100%{box-shadow:0 0 14px rgba(255,173,72,0.03)}50%{box-shadow:0 0 38px rgba(255,173,72,0.08)}}
+
+    .power-card:hover{ transform:translateY(-8px); box-shadow:0 18px 60px rgba(0,0,0,0.6) }
+
+    /* ===== dropdown animated (bug) ===== */
+    .select-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px }
+    .select-box{ width:100%; max-width:480px; padding:12px 14px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:rgba(0,0,0,0.36); border:1px solid rgba(168,85,247,0.12) }
+    .select-box .label{ color:#e9dbff; font-weight:600 }
+    .select-box .arrow{ transition:transform .28s cubic-bezier(.2,.9,.2,1) }
+    .select-box.open .arrow{ transform:rotate(180deg) }
+
+    .options{ width:100%; max-width:480px; margin:0 auto; border-radius:12px; overflow:hidden; border:1px solid rgba(168,85,247,0.12); background:linear-gradient(180deg, rgba(40,7,60,0.6), rgba(12,0,26,0.6)); max-height:0; opacity:0; transition:max-height .36s cubic-bezier(.2,.9,.2,1), opacity .28s }
+    .options.open{ max-height:420px; opacity:1 }
+    .options div{ padding:12px 14px; border-bottom:1px dashed rgba(255,255,255,0.03); cursor:pointer; display:flex; gap:10px; align-items:center }
+    .options div:hover{ background:rgba(168,85,247,0.12); transform:translateX(6px); transition:all .18s linear }
+    .dot{ width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.04); box-shadow:0 0 6px rgba(168,85,247,0.12) }
+
+    /* ===== chat ===== */
+    .chat-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px }
+    .chat-list{ display:flex; flex-direction:column; gap:10px }
+    .chat-item{ display:flex; gap:10px; align-items:center; padding:10px; border-radius:10px; background:rgba(255,255,255,0.02); cursor:pointer; transition:transform .12s }
+    .chat-item:hover{ transform:translateX(6px) }
+    .chat-avatar{ width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color:rgba(168,85,247,0.95) }
+    .btn-new{ padding:8px 12px;border-radius:10px;border:none;background:linear-gradient(180deg,#b68cff,#8852ff);color:#fff;cursor:pointer;font-weight:700 }
+
+    /* ===== popup center ===== */
+    .popup{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(0.9); background:linear-gradient(180deg, rgba(18,0,45,0.98), rgba(10,0,20,0.98)); padding:20px 24px;border-radius:14px; text-align:center; z-index:200; border:1px solid rgba(168,85,247,0.26); box-shadow:0 30px 80px rgba(18,0,40,0.6); opacity:0; pointer-events:none; transition:all .28s ease; min-width:220px }
+    .popup.show{ opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto }
+    .popup .txt{ font-weight:800; color:#f5efff }
+    .popup .sub{ font-size:13px; color:#d6c7ff; opacity:0.95; margin-top:6px }
+
+    /* ===== responsive ===== */
+    @media (max-width:520px){
+      .wrap{padding:14px}
+      .power-card{ width:46vw; height:38vw }
+      .navbar{ width:calc(100% - 24px) }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="app">
+
+    <!-- LOGIN PAGE -->
+    <div id="page-login" class="page active">
+      <div class="center">
+        <div class="avatar" aria-hidden="true">
+          <!-- simple decorative avatar svg -->
+          <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="ag1" x1="0" x2="1"><stop offset="0" stop-color="#f3aaff"/><stop offset="1" stop-color="#8e4bff"/></linearGradient></defs>
+            <rect x="0" y="0" width="120" height="120" rx="14" fill="rgba(255,255,255,0.02)"/>
+            <circle cx="60" cy="40" r="20" fill="url(#ag1)"/>
+            <rect x="34" y="72" width="52" height="20" rx="6" fill="rgba(255,255,255,0.02)"/>
+          </svg>
+        </div>
+        <h2 class="neon">RDVSP V4</h2>
+        <div class="hint">Silakan login untuk melihat antarmuka demo</div>
+      </div>
+
+      <div class="card">
+        <input id="inpUser" class="input" placeholder="Username" value="@Vinzz" aria-label="username">
+        <input id="inpPass" class="input" placeholder="Password" value="88" type="password" aria-label="password">
+        <button id="btnLogin" class="btn">LOGIN</button>
+        <div class="hint">Demo credentials terisi: <strong>@Vinzz</strong> / <strong>88</strong></div>
+      </div>
+    </div>
+
+    <!-- HOME PAGE -->
+    <div id="page-home" class="page">
+      <h1 class="neon center">RDVSP V4</h1>
+      <div class="card stat">
+        <div>
+          <div style="font-size:13px;color:#d6c7ff">Beta Test</div>
+          <div style="font-weight:800;font-size:16px;margin-top:6px">This Apps Server Still On Beta Test.</div>
+        </div>
+        <i class="fas fa-rocket" style="font-size:28px;color:rgba(142,75,255,0.95)"></i>
+      </div>
+
+      <div class="card" style="margin-top:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;color:#d6c7ff">Server Stats</div>
+            <div style="font-weight:700;font-size:16px;margin-top:6px">Online: <span id="online">0</span></div>
+            <div style="font-weight:700;font-size:16px;margin-top:4px">Active: <span id="active">0</span></div>
+          </div>
+          <i class="fas fa-server" style="font-size:28px;color:rgba(168,85,247,0.95)"></i>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <div style="font-weight:700;color:#f2eaff;margin-bottom:6px">Telegram Channel</div>
+        <div style="color:#d6c7ff">Join to get more info!</div>
+      </div>
+    </div>
+
+    <!-- POWER PAGE (visual-only, safe names) -->
+    <div id="page-power" class="page">
+      <div class="power-header">
+        <div class="icon-wrap" aria-hidden="true">
+          <!-- decorative inline SVG -->
+          <svg class="icon-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#f3aaff"/><stop offset="1" stop-color="#8e4bff"/></linearGradient></defs>
+            <rect x="2" y="2" width="60" height="60" rx="10" fill="rgba(255,255,255,0.02)"/>
+            <path d="M38 18 L26 34 L34 34 L24 46 L42 28 L34 28 Z" fill="url(#g)"/>
+          </svg>
+        </div>
+        <div>
+          <div class="neon" style="font-size:18px">Network Tools</div>
+          <div style="color:#d6c7ff;font-size:13px">Visual demo — tampilan & animasi saja</div>
+        </div>
+      </div>
+
+      <div class="power-grid">
+        <div class="power-card pc-red" data-id="system-panel" role="button" tabindex="0">
+          <i class="fas fa-cogs" style="font-size:32px;color:#ff6b98"></i>
+          <div class="label">System Panel</div>
+          <small>Visual Demo</small>
+        </div>
+
+        <div class="power-card pc-blue" data-id="server-control" role="button" tabindex="0">
+          <i class="fas fa-server" style="font-size:30px;color:#6fb8ff"></i>
+          <div class="label">Server Control</div>
+          <small>Visual Demo</small>
+        </div>
+
+        <div class="power-card pc-green" data-id="wifi-manager" role="button" tabindex="0">
+          <i class="fas fa-wifi" style="font-size:30px;color:#7fffd8"></i>
+          <div class="label">WiFi Manager</div>
+          <small>Visual Demo</small>
+        </div>
+
+        <div class="power-card pc-amber" data-id="network-tools" role="button" tabindex="0">
+          <i class="fas fa-network-wired" style="font-size:30px;color:#ffd39f"></i>
+          <div class="label">Network Tools</div>
+          <small>Visual Demo</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG PAGE (dropdown animated) -->
+    <div id="page-bug" class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div class="neon" style="font-size:18px">marts</div><div style="font-size:13px;color:#d6c7ff">Role: MEMBER • Exp: 2025-10-09</div></div>
+          <i class="fas fa-user" style="font-size:28px;color:rgba(168,85,247,0.95)"></i>
+        </div>
+      </div>
+
+      <div class="card">
+        <label style="display:block;text-align:left;color:#d6c7ff;margin-bottom:8px">Target Number</label>
+        <input id="targetInput" class="input" placeholder="e.g. +62xxxxxxxxxx">
+
+        <div class="select-wrap" style="margin-top:8px">
+          <div id="selectBox" class="select-box" aria-expanded="false">
+            <div class="label">Select Bug</div>
+            <div class="arrow"><i class="fas fa-chevron-down"></i></div>
+          </div>
+
+          <div id="options" class="options" aria-hidden="true">
+            <div data-value="CRASH ANDROID"><span class="dot"></span> CRASH ANDROID</div>
+            <div data-value="SPAM WHATSAPP"><span class="dot"></span> SPAM WHATSAPP</div>
+            <div data-value="LAG DEVICE"><span class="dot"></span> LAG DEVICE</div>
+            <div data-value="CRASH SERVER"><span class="dot"></span> CRASH SERVER</div>
+          </div>
+        </div>
+
+        <button id="btnSend" class="btn" style="margin-top:12px">🥵 SEND BUG</button>
+      </div>
+    </div>
+
+    <!-- CHAT PAGE -->
+    <div id="page-chat" class="page">
+      <div class="chat-header">
+        <div>
+          <h3 class="neon" style="margin:0">Chat</h3>
+          <div style="font-size:12px;color:#d6c7ff">Percakapan</div>
+        </div>
+        <div>
+          <button id="btnNew" class="btn-new">+ New</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:12px">
+        <div class="chat-list" id="chatList">
+          <div class="chat-item" data-user="vinzz">
+            <div class="chat-avatar"><i class="fas fa-user"></i></div>
+            <div class="chat-meta"><div class="chat-name">noval</div><div class="chat-last">Halo — testing</div></div>
+          </div>
+          <div class="chat-item" data-user="linzz">
+            <div class="chat-avatar"><i class="fas fa-user"></i></div>
+            <div class="chat-meta"><div class="chat-name">rizky</div><div class="chat-last">Siap!</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CENTER POPUP -->
+  <div id="popup" class="popup" role="status" aria-live="polite">
+    <div class="txt" id="popupMain">SUCCES LEKKU menu yang dipilih✅</div>
+    <div class="sub" id="popupSub"></div>
+  </div>
+
+  <!-- BOTTOM NAVBAR -->
+  <div id="navBar" class="navbar" aria-hidden="true">
+    <div class="nav-item" id="navHome"><i class="fas fa-home"></i>Home</div>
+    <div class="nav-item" id="navBug"><i class="fas fa-bug"></i>Bug</div>
+    <div class="nav-item" id="navPower"><i class="fas fa-bolt"></i>Power</div>
+    <div class="nav-item" id="navChat"><i class="fas fa-comments"></i>Chat</div>
+  </div>
+
+<script>
+/* ===== App logic ===== */
+
+// Elements
+const pages = {
+  login: document.getElementById('page-login'),
+  home:  document.getElementById('page-home'),
+  power: document.getElementById('page-power'),
+  bug:   document.getElementById('page-bug'),
+  chat:  document.getElementById('page-chat')
+};
+const navBar = document.getElementById('navBar');
+const inpUser = document.getElementById('inpUser');
+const inpPass = document.getElementById('inpPass');
+const btnLogin = document.getElementById('btnLogin');
+const btnSend  = document.getElementById('btnSend');
+const popup    = document.getElementById('popup');
+const popupMain = document.getElementById('popupMain');
+const popupSub  = document.getElementById('popupSub');
+
+// Start: only login visible (HTML already sets it)
+function showOnly(key){
+  Object.keys(pages).forEach(k => pages[k].classList.remove('active'));
+  pages[key].classList.add('active');
+}
+showOnly('login');
+
+// Login handling (client-side demo)
+btnLogin.addEventListener('click', attemptLogin);
+inpPass.addEventListener('keydown', (e) => { if(e.key === 'Enter') attemptLogin(); });
+
+function attemptLogin(){
+  const u = (inpUser.value||'').trim();
+  const p = (inpPass.value||'').trim();
+  if(u === '@Vinzz' && p === '88'){
+    // reveal nav + home
+    navBar.classList.add('visible');
+    navBar.setAttribute('aria-hidden','false');
+    showOnly('home');
+    showPopup('Welcome '+u, 'Login berhasil — akses dibuka');
+    setTimeout(hidePopup, 1400);
+  } else {
+    alert('Login gagal — username atau password salah.');
+  }
+}
+
+// Nav actions
+document.getElementById('navHome').addEventListener('click', ()=> showOnly('home'));
+document.getElementById('navBug').addEventListener('click', ()=> showOnly('bug'));
+document.getElementById('navPower').addEventListener('click', ()=> showOnly('power'));
+document.getElementById('navChat').addEventListener('click', ()=> showOnly('chat'));
+
+// Simulate stats
+let online = 0, active = 0;
+setInterval(() => {
+  online = Math.min(64, online + (Math.random() > 0.76 ? 1 : 0));
+  active = Math.min(16, active + (Math.random() > 0.82 ? 1 : 0));
+  document.getElementById('online').textContent = online;
+  document.getElementById('active').textContent = active;
+}, 2200);
+
+/* ===== Power cards (visual feedback) ===== */
+document.querySelectorAll('.power-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const label = card.querySelector('.label').textContent;
+    // show same style popup but main text must be the exact phrase
+    popupMain.textContent = 'SUCCES LEKKU menu yang dipilih✅';
+    popupSub.textContent = label + ' • Visual demo';
+    showPopup();
+    // subtle pulse
+    card.animate([{ transform:'scale(1)' }, { transform:'scale(0.98)' }, { transform:'scale(1)' }], { duration:240 });
+  });
+  card.addEventListener('keydown', (e) => { if(e.key === 'Enter') card.click(); });
+});
+
+/* ===== Bug dropdown animated ===== */
+const selectBox = document.getElementById('selectBox');
+const options = document.getElementById('options');
+let selectedBug = null;
+
+function toggleOptions(open){
+  const willOpen = (typeof open === 'boolean') ? open : !options.classList.contains('open');
+  if(willOpen){
+    options.classList.add('open');
+    selectBox.classList.add('open');
+    selectBox.setAttribute('aria-expanded','true');
+    options.setAttribute('aria-hidden','false');
+  } else {
+    options.classList.remove('open');
+    selectBox.classList.remove('open');
+    selectBox.setAttribute('aria-expanded','false');
+    options.setAttribute('aria-hidden','true');
+  }
+}
+
+selectBox.addEventListener('click', (e)=> { e.stopPropagation(); toggleOptions(); });
+
+options.querySelectorAll('div').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    const val = opt.getAttribute('data-value') || opt.textContent.trim();
+    selectedBug = val;
+    selectBox.querySelector('.label').textContent = val;
+    // micro flash
+    opt.animate([{ backgroundColor:'rgba(168,85,247,0.12)' }, { backgroundColor:'transparent' }], { duration:260 });
+    toggleOptions(false);
+  });
+});
+
+// close when clicking outside
+document.addEventListener('click', (e) => {
+  if(!selectBox.contains(e.target) && !options.contains(e.target)) toggleOptions(false);
+});
+
+// send bug -> show exact center message
+btnSend.addEventListener('click', () => {
+  if(!selectedBug){
+    alert('Pilih bug dulu ya!');
+    return;
+  }
+  const target = (document.getElementById('targetInput').value || '(no target)').trim();
+  popupMain.textContent = 'SUCCES LEKKU menu yang dipilih✅';
+  popupSub.textContent = `${selectedBug} • Target: ${target}`;
+  showPopup();
+});
+
+/* ===== Chat: + New adds dummy chat ===== */
+const chatList = document.getElementById('chatList');
+const btnNew = document.getElementById('btnNew');
+let newCounter = 0;
+btnNew.addEventListener('click', () => {
+  newCounter++;
+  const name = `new-${newCounter}`;
+  const el = document.createElement('div');
+  el.className = 'chat-item';
+  el.innerHTML = `<div class="chat-avatar"><i class="fas fa-user"></i></div><div class="chat-meta"><div class="chat-name">${name}</div><div class="chat-last">New message (demo)</div></div>`;
+  chatList.prepend(el);
+  el.animate([{ transform:'translateY(-8px)', opacity:0 }, { transform:'translateY(0)', opacity:1 }], { duration:260 });
+});
+
+/* ===== Popup helpers ===== */
+let popupTimer = null;
+function showPopup(mainText, subText){
+  if(popupTimer) clearTimeout(popupTimer);
+  if(mainText) popupMain.textContent = mainText;
+  if(subText !== undefined) popupSub.textContent = subText;
+  popup.classList.add('show');
+  popupTimer = setTimeout(() => hidePopup(), 2400);
+}
+function hidePopup(){ popup.classList.remove('show'); }
+
+/* ===== Init UX ===== */
+(function init(){
+  navBar.classList.remove('visible');
+  navBar.setAttribute('aria-hidden','true');
+  // focus username
+  inpUser.focus();
+})();
+</script>
+</body>
+</html>
